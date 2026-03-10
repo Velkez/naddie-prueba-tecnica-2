@@ -1,8 +1,44 @@
 # Segunda Prueba Técnica - Naddie
+![Naddie](https://github.com/user-attachments/assets/da0ca514-8020-4973-a36b-1bce957409a0)
 
 ---
 
 Para observar el ejercicio, ingrese al siguiente enlace: [Prueba Técnica](#)
+
+Guía de Uso
+Botón (Evento)
+Para utilizar la funcionalidad de eventos, primero diríjase a la barra superior de opciones y posicione el cursor sobre la sección Add. Se desplegará un menú con múltiples opciones de adición; allí, navegue hasta la subsección UI y haga clic en la opción Evento, tal como se ilustra a continuación:
+
+<img width="364" height="228" alt="image" src="https://github.com/user-attachments/assets/788e54de-f10e-4220-9cb8-6433bb033f31" />
+
+Para activar esta opción, es indispensable tener un Mesh (malla) seleccionado en la escena. De lo contrario, el sistema mostrará una alerta indicando que debe seleccionar un objeto primero.
+
+<img width="445" height="133" alt="image" src="https://github.com/user-attachments/assets/e833db09-c5db-4de2-a725-a962549869b6" />
+
+Una vez seleccionado el objeto y habilitada la funcionalidad, aparecerá una nueva pestaña llamada Eventos en la barra lateral (sidebar). Haga clic en ella para acceder a la configuración:
+
+<img width="312" height="528" alt="image" src="https://github.com/user-attachments/assets/4dcddc3f-b971-4786-848b-dd8ef0adc39a" />
+
+Dentro del menú desplegable, encontrará tres opciones: Rotación Horizontal, Rotación Vertical y Ninguno. Al seleccionar cualquiera de ellas, el objeto ejecutará la acción descrita de forma inmediata y persistente.
+
+<img width="259" height="110" alt="image" src="https://github.com/user-attachments/assets/98913769-9ed5-45ff-882e-be9a4af8be65" />
+
+Imagen
+Para utilizar la funcionalidad de imagen, diríjase nuevamente a la barra superior de opciones en la sección Add. Dentro de la subsección UI, seleccione la opción Imagen:
+
+<img width="365" height="225" alt="image" src="https://github.com/user-attachments/assets/3fd57abd-a010-4411-b7ae-ddec02725edb" />
+
+Tras activarla, aparecerá un botón de carga en el panel lateral que le permitirá importar la imagen de su preferencia:
+
+<img width="314" height="476" alt="image" src="https://github.com/user-attachments/assets/d5b05141-8434-484d-8747-73e0ee91bd80" />
+
+Al interactuar con este botón, se abrirá el gestor de archivos de su dispositivo. Los formatos admitidos son PNG, JPG y WEBP. Una vez seleccionada, la imagen se cargará en la escena como un objeto con geometría plana (PlaneGeometry), el cual ajustará sus dimensiones automáticamente según la proporción original de la imagen.
+
+Como cualquier otro objeto en la escena, podrá modificar sus propiedades de transformación (posición, rotación y escala) libremente:
+
+<img width="316" height="780" alt="image" src="https://github.com/user-attachments/assets/82f11917-860b-44bd-a6fa-7477beb227ff" />
+
+Además, también tendrá la posibilidad de aplicar eventos de animación a la imagen siguiendo los mismos pasos descritos en la sección anterior.
 
 ---
 ## Desglosé del problema
@@ -152,3 +188,39 @@ Una vez que el objeto "Imagen" existe en la escena y está seleccionado, su conf
 - **Actualización en Tiempo Real:** Se utilizó la señal `signals.objectChanged` para asegurar que cualquier cambio en la imagen se refleje inmediatamente en el Viewport y en el historial de "Undo/Redo".
 - **Selección Automática:** Inmediatamente después de la carga exitosa desde el panel Scene, el sistema fuerza la selección del nuevo objeto (`editor.select( mesh )`) para que el usuario sea redirigido visualmente al panel de gestión de objetos.
 
+```mermaid
+flowchart TD
+    %% Inicio y Activación del Portal
+    Start((Inicio)) --> TopMenu[Menubar: Add > UI > Imagen]
+    TopMenu --> ShowPortal[Mostrar Portal de Carga en </br> Sidebar.Scene.js]
+    
+    %% Flujo de Carga y Validación
+    ShowPortal --> UserUpload[Usuario selecciona archivo </br> PNG, JPG, WEBP]
+    UserUpload --> Validate{¿Formato </br> válido?}
+    
+    Validate -- No --> Error[Alerta: Formato no soportado]
+    Error --> ShowPortal
+
+    %% Creación y Transformación Técnica
+    Validate -- Sí --> LoadTexture[Cargar mediante </br> TextureLoader]
+    LoadTexture --> CalcAspect[Calcular Aspect Ratio </br> de la imagen]
+    CalcAspect --> CreateMesh["Instanciar THREE.Mesh </br> (PlaneGeometry + userData)"]
+    
+    %% Integración con el Editor
+    CreateMesh --> Command[Ejecutar AddObjectCommand]
+    Command --> AutoSelect["signals.objectSelected (Selección automática)"]
+    
+    %% Gestión Contextual
+    AutoSelect --> CheckType{¿Es </br> ui-image?}
+    CheckType -- Sí --> ShowObjectPanel[Mostrar controles Object </br> en Sidebar.Object.js]
+    
+    %% Interacción del Usuario
+    ShowObjectPanel --> Interaction[Usuario ajusta Opacidad / </br> Transformaciones]
+    Interaction --> Signal["signals.objectChanged.dispatch()"]
+    
+    %% Persistencia
+    Signal --> Viewport((Actualización en Viewport </br> y Historial Undo/Redo))
+
+    %% Relación de retorno
+    Error -.-> UserUpload
+```
