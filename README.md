@@ -3,7 +3,7 @@
 
 ---
 
-Para observar el ejercicio, ingrese al siguiente enlace: [Prueba Técnica](https://velkez.github.io/naddie-prueba-tecnica-2/editor/)
+Para usar el ejercicio, ingrese al siguiente enlace: [Prueba Técnica](https://velkez.github.io/naddie-prueba-tecnica-2/editor/)
 
 ## Guía de Uso
 
