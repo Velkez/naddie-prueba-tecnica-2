@@ -6,7 +6,9 @@
 Para observar el ejercicio, ingrese al siguiente enlace: [Prueba Técnica](https://velkez.github.io/naddie-prueba-tecnica-2/editor/)
 
 Guía de Uso
-Botón (Evento)
+
+## Botón (Evento)
+
 Para utilizar la funcionalidad de eventos, primero diríjase a la barra superior de opciones y posicione el cursor sobre la sección Add. Se desplegará un menú con múltiples opciones de adición; allí, navegue hasta la subsección UI y haga clic en la opción Evento, tal como se ilustra a continuación:
 
 <img width="364" height="228" alt="image" src="https://github.com/user-attachments/assets/788e54de-f10e-4220-9cb8-6433bb033f31" />
