@@ -5,9 +5,9 @@
 
 Para observar el ejercicio, ingrese al siguiente enlace: [Prueba Técnica](https://velkez.github.io/naddie-prueba-tecnica-2/editor/)
 
-Guía de Uso
+## Guía de Uso
 
-## Botón (Evento)
+### Botón (Evento)
 
 Para utilizar la funcionalidad de eventos, primero diríjase a la barra superior de opciones y posicione el cursor sobre la sección Add. Se desplegará un menú con múltiples opciones de adición; allí, navegue hasta la subsección UI y haga clic en la opción Evento, tal como se ilustra a continuación:
 
@@ -29,7 +29,7 @@ Dentro del menú desplegable, encontrará tres opciones: Rotación Horizontal, R
 <img width="259" height="110" alt="image" src="https://github.com/user-attachments/assets/98913769-9ed5-45ff-882e-be9a4af8be65" />
 
 
-## Imagen
+### Imagen
 
 Para utilizar la funcionalidad de imagen, diríjase nuevamente a la barra superior de opciones en la sección Add. Dentro de la subsección UI, seleccione la opción Imagen:
 
