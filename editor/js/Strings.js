@@ -507,9 +507,10 @@ function Strings( config ) {
 			'menubar/add/camera/perspective': 'Perspective',
 			'menubar/add/camera/orthographic': 'Orthographic',
 
-			'menubar/add/ui': 'UI',
-			'menubar/add/ui/evento': 'Evento',
-			'menubar/add/ui/imagen': 'Imagen',
+			'menubar/add/other': 'Other',
+			'menubar/add/other/evento': 'Evento',
+			'menubar/add/other/imagen': 'Imagen',
+			'menubar/add/other/boton': 'Boton',
 
 			'menubar/status/autosave': 'autosave',
 
