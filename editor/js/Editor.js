@@ -6,6 +6,7 @@ import { History as _History } from './History.js';
 import { Strings } from './Strings.js';
 import { Storage as _Storage } from './Storage.js';
 import { Selector } from './Selector.js';
+import { UIStateManager } from './UIStateManager.js';
 
 var _DEFAULT_CAMERA = new THREE.PerspectiveCamera( 50, 1, 0.001, 1e10 );
 _DEFAULT_CAMERA.name = 'Camera';
@@ -96,7 +97,13 @@ function Editor() {
 		animationPanelChanged: new Signal(),
 		animationPanelResized: new Signal(),
 
-		morphTargetsUpdated: new Signal()
+		morphTargetsUpdated: new Signal(),
+
+		// UI 2D System
+		uiElementTransformed: new Signal(),
+		uiStatePersisted: new Signal(),
+		uiElementSelected: new Signal(),
+		uiOverlayToggled: new Signal()
 
 	};
 
@@ -105,6 +112,7 @@ function Editor() {
 	this.selector = new Selector( this );
 	this.storage = new _Storage();
 	this.strings = new Strings( this.config );
+	this.uiStateManager = new UIStateManager( this );
 
 	this.loader = new Loader( this );
 
@@ -139,6 +147,14 @@ function Editor() {
 	this.viewportColor = new THREE.Color();
 
 	this.addCamera( this.camera );
+
+	// UI 2D State - Maestro State
+	this.uiState = {
+		canvas: {
+			elements: [],
+			overlayVisible: false
+		}
+	};
 
 }
 

@@ -4,6 +4,8 @@ import { UIPanel, UIRow } from './libs/ui.js';
 
 import { AddObjectCommand } from './commands/AddObjectCommand.js';
 
+import { createImageElement, createButtonElement, ELEMENT_TYPE } from './UIConstants.js';
+
 function MenubarAdd( editor ) {
 
 	const strings = editor.strings;
@@ -505,7 +507,7 @@ function MenubarAdd( editor ) {
 
 	// UI
 
-	const uiSubmenuTitle = new UIRow().setTextContent( strings.getKey( 'menubar/add/ui' ) ).addClass( 'option' ).addClass( 'submenu-title' );
+	const uiSubmenuTitle = new UIRow().setTextContent( 'UI' ).addClass( 'option' ).addClass( 'submenu-title' );
 	uiSubmenuTitle.onMouseOver( function () {
 
 		const { top, right } = uiSubmenuTitle.dom.getBoundingClientRect();
@@ -527,11 +529,119 @@ function MenubarAdd( editor ) {
 	const uiSubmenu = new UIPanel().setPosition( 'fixed' ).addClass( 'options' ).setDisplay( 'none' );
 	uiSubmenuTitle.add( uiSubmenu );
 
-	// UI / Evento
+	// UI / Imagen
+	option = new UIRow();
+	option.setClass( 'option' );
+	option.setTextContent( strings.getKey( 'menubar/add/other/imagen' ) );
+	option.onClick( function () {
+
+		// Create hidden file input
+		const fileInput = document.createElement( 'input' );
+		fileInput.type = 'file';
+		fileInput.accept = 'image/*';
+		fileInput.style.display = 'none';
+		document.body.appendChild( fileInput );
+
+		fileInput.addEventListener( 'change', function ( e ) {
+
+			const file = e.target.files[ 0 ];
+			if ( ! file ) {
+
+				document.body.removeChild( fileInput );
+				return;
+
+			}
+
+			const validMimeTypes = [ 'image/jpeg', 'image/png', 'image/webp', 'image/gif' ];
+			if ( ! validMimeTypes.includes( file.type ) ) {
+
+				alert( 'Invalid image format. Supported formats: JPEG, PNG, WebP, GIF' );
+				document.body.removeChild( fileInput );
+				return;
+
+			}
+
+			// Convert to base64
+			const reader = new FileReader();
+			reader.onload = function ( event ) {
+
+				const base64 = event.target.result;
+
+				// Create element using helper function
+				const newElement = createImageElement( base64, file.name );
+
+				editor.uiState.canvas.elements.push( newElement );
+				editor.signals.uiElementTransformed.dispatch();
+
+				document.body.removeChild( fileInput );
+
+			};
+
+			reader.readAsDataURL( file );
+
+		} );
+
+		fileInput.click();
+
+	} );
+	uiSubmenu.add( option );
+
+	// UI / Boton
+	option = new UIRow();
+	option.setClass( 'option' );
+	option.setTextContent( strings.getKey( 'menubar/add/other/boton' ) );
+	option.onClick( function () {
+
+		const existingButton = editor.uiState.canvas.elements.find( element => element.type === ELEMENT_TYPE.BUTTON );
+
+		if ( existingButton ) {
+
+			alert( 'Solo se permite un boton de evento' );
+			return;
+
+		}
+
+		const buttonCount = editor.uiState.canvas.elements.filter( element => element.type === ELEMENT_TYPE.BUTTON ).length;
+		const buttonNumber = buttonCount + 1;
+
+		// Create element using helper function
+		const newElement = createButtonElement( buttonNumber );
+
+		editor.uiState.canvas.elements.push( newElement );
+		editor.signals.uiElementTransformed.dispatch();
+
+	} );
+	uiSubmenu.add( option );
+
+	// Other
+
+	const otherSubmenuTitle = new UIRow().setTextContent( strings.getKey( 'menubar/add/other' ) ).addClass( 'option' ).addClass( 'submenu-title' );
+	otherSubmenuTitle.onMouseOver( function () {
+
+		const { top, right } = otherSubmenuTitle.dom.getBoundingClientRect();
+		const { paddingTop } = getComputedStyle( this.dom );
+
+		otherSubmenu.setLeft( right + 'px' );
+		otherSubmenu.setTop( top - parseFloat( paddingTop ) + 'px' );
+		otherSubmenu.setStyle( 'max-height', [ `calc( 100vh - ${top}px )` ] );
+		otherSubmenu.setDisplay( 'block' );
+
+	} );
+	otherSubmenuTitle.onMouseOut( function () {
+
+		otherSubmenu.setDisplay( 'none' );
+
+	} );
+	options.add( otherSubmenuTitle );
+
+	const otherSubmenu = new UIPanel().setPosition( 'fixed' ).addClass( 'options' ).setDisplay( 'none' );
+	otherSubmenuTitle.add( otherSubmenu );
+
+	// Other / Evento
 
 	option = new UIRow();
 	option.setClass( 'option' );
-	option.setTextContent( strings.getKey( 'menubar/add/ui/evento' ) );
+	option.setTextContent( strings.getKey( 'menubar/add/other/evento' ) );
 	option.onClick( function () {
 
 		if ( editor.selected === null || ! editor.selected.isMesh ) {
@@ -546,20 +656,93 @@ function MenubarAdd( editor ) {
 		}
 
 	} );
-	uiSubmenu.add( option );
+	otherSubmenu.add( option );
 
-	// UI / Imagen
+	// Other / Imagen (añade un plano con imagen)
 
 	option = new UIRow();
 	option.setClass( 'option' );
-	option.setTextContent( strings.getKey( 'menubar/add/ui/imagen' ) );
+	option.setTextContent( strings.getKey( 'menubar/add/other/imagen' ) );
 	option.onClick( function () {
 
-		editor.awaitingImage = true;
-		editor.signals.sceneGraphChanged.dispatch();
+		const fileInput = document.createElement( 'input' );
+		fileInput.type = 'file';
+		fileInput.accept = 'image/jpeg,image/png,image/webp';
+		fileInput.style.display = 'none';
+		document.body.appendChild( fileInput );
+
+		fileInput.addEventListener( 'change', function ( e ) {
+
+			const file = e.target.files[ 0 ];
+			if ( ! file ) {
+
+				document.body.removeChild( fileInput );
+				return;
+
+			}
+
+			const validTypes = [ 'image/jpeg', 'image/png', 'image/webp' ];
+			if ( ! validTypes.includes( file.type ) ) {
+
+				alert( 'Please select a JPG, PNG or WebP image.' );
+				document.body.removeChild( fileInput );
+				return;
+
+			}
+
+			const imageUrl = URL.createObjectURL( file );
+			const image = new Image();
+			image.onload = function () {
+
+				const loader = new THREE.TextureLoader();
+				const texture = loader.load( imageUrl );
+				texture.colorSpace = THREE.SRGBColorSpace;
+
+				const aspectRatio = image.width / image.height;
+				let width = 1;
+				let height = 1;
+
+				if ( aspectRatio > 1 ) {
+
+					height = 1 / aspectRatio;
+
+				} else {
+
+					width = aspectRatio;
+
+				}
+
+				const geometry = new THREE.PlaneGeometry( width, height );
+				const material = new THREE.MeshBasicMaterial( { map: texture, side: THREE.DoubleSide, transparent: true, opacity: 1 } );
+				const mesh = new THREE.Mesh( geometry, material );
+
+				if ( editor.imageCount === undefined ) {
+
+					editor.imageCount = 0;
+
+				}
+
+				editor.imageCount ++;
+				mesh.name = 'Imagen ' + editor.imageCount;
+
+				mesh.userData.type = 'ui-image';
+
+				editor.execute( new AddObjectCommand( editor, mesh ) );
+				editor.select( mesh );
+
+				URL.revokeObjectURL( imageUrl );
+				document.body.removeChild( fileInput );
+
+			};
+
+			image.src = imageUrl;
+
+		} );
+
+		fileInput.click();
 
 	} );
-	uiSubmenu.add( option );
+	otherSubmenu.add( option );
 
 	return container;
 

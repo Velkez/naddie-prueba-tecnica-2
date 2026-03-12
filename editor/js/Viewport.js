@@ -21,12 +21,301 @@ import { ColorEnvironment } from 'three/addons/environments/ColorEnvironment.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { ViewportPathtracer } from './Viewport.Pathtracer.js';
 
+import { UI_BUTTON_COLORS, ELEMENT_TYPE } from './UIConstants.js';
+
 function Viewport( editor ) {
 
 	const selector = editor.selector;
 	const signals = editor.signals;
 
 	const container = new UIPanel();
+
+	// UI 2D Overlay
+	let uiOverlay = null;
+	let uiCanvas = null;
+	let uiElementsContainer = null;
+
+	function createUIOverlay() {
+
+		uiOverlay = document.createElement( 'div' );
+		uiOverlay.id = 'ui-overlay';
+		uiOverlay.style.position = 'absolute';
+		uiOverlay.style.top = '0';
+		uiOverlay.style.left = '0';
+		uiOverlay.style.width = '100%';
+		uiOverlay.style.height = '100%';
+		uiOverlay.style.zIndex = '1000';
+		uiOverlay.style.display = 'none';
+		uiOverlay.style.pointerEvents = 'none';
+
+		// Canvas visualization box (4:3 proportion)
+		uiCanvas = document.createElement( 'div' );
+		uiCanvas.id = 'ui-canvas-box';
+		uiCanvas.style.position = 'absolute';
+		uiCanvas.style.top = '50%';
+		uiCanvas.style.left = '50%';
+		uiCanvas.style.transform = 'translate(-50%, -50%)';
+		// Border and background are set in CSS via #ui-canvas-box
+		uiCanvas.style.boxSizing = 'border-box';
+		uiCanvas.style.overflow = 'hidden';
+
+		// Container for UI elements
+		uiElementsContainer = document.createElement( 'div' );
+		uiElementsContainer.id = 'ui-elements';
+		uiElementsContainer.style.position = 'absolute';
+		uiElementsContainer.style.top = '0';
+		uiElementsContainer.style.left = '0';
+		uiElementsContainer.style.width = '100%';
+		uiElementsContainer.style.height = '100%';
+		uiElementsContainer.style.pointerEvents = 'none';
+
+		uiCanvas.appendChild( uiElementsContainer );
+		uiOverlay.appendChild( uiCanvas );
+		container.dom.appendChild( uiOverlay );
+
+	}
+
+	createUIOverlay();
+
+	// Update CSS variable for canvas box size based on viewport width
+	function updateCanvasBoxSize() {
+
+		if ( ! container.dom ) return;
+
+		const viewportWidth = container.dom.offsetWidth;
+		document.documentElement.style.setProperty( '--viewport-available-width', viewportWidth + 'px' );
+
+	}
+
+	// Initial size update
+	updateCanvasBoxSize();
+
+	// Restore overlay visibility from persisted state
+	function restoreOverlayVisibility() {
+
+		const uiStateManager = editor.uiStateManager;
+		if ( uiStateManager.getOverlayVisible() ) {
+
+			editor.uiState.canvas.overlayVisible = true;
+			if ( uiOverlay ) {
+
+				uiOverlay.style.display = 'block';
+
+			}
+
+		}
+
+	}
+
+	restoreOverlayVisibility();
+
+	// Create UI Toggle Button
+	const uiToggleButton = document.createElement( 'button' );
+	uiToggleButton.id = 'ui-toggle-button';
+	uiToggleButton.textContent = 'Overlay UI';
+	uiToggleButton.title = 'Toggle UI Overlay';
+	uiToggleButton.style.position = 'absolute';
+	uiToggleButton.style.bottom = '20px';
+	uiToggleButton.style.right = '10px';
+
+	uiToggleButton.addEventListener( 'click', onToggleUIClick );
+
+	function onToggleUIClick() {
+
+		const elements = editor.uiState.canvas.elements || [];
+		if ( elements.length === 0 ) {
+
+			alert( 'Añade al menos un elemento UI' );
+			return;
+
+		}
+
+		const isVisible = uiOverlay.style.display !== 'none';
+		const newVisible = ! isVisible;
+
+		// Use UIStateManager to persist visibility
+		editor.uiStateManager.setOverlayVisible( newVisible );
+		signals.uiOverlayToggled.dispatch( newVisible );
+
+	}
+
+	container.dom.appendChild( uiToggleButton );
+
+	// Render UI elements from uiState
+	function renderUIElements() {
+
+		if ( ! uiElementsContainer ) return;
+
+		// Clear current elements
+		uiElementsContainer.innerHTML = '';
+
+		const elements = editor.uiState.canvas.elements;
+		if ( ! elements || elements.length === 0 ) return;
+
+		// Render each element in order (z-index = array order)
+		elements.forEach( function ( element ) {
+
+			let domElement = null;
+
+			if ( element.type === ELEMENT_TYPE.IMAGE ) {
+
+				domElement = document.createElement( 'img' );
+				domElement.src = element.src;
+				domElement.style.objectFit = 'contain';
+
+			} else if ( element.type === ELEMENT_TYPE.BUTTON ) {
+
+				domElement = document.createElement( 'button' );
+				domElement.textContent = element.label || 'Button';
+				domElement.className = 'ui-button';
+				domElement.style.pointerEvents = 'auto';
+
+				if ( uiButtonLight ) {
+
+					domElement.style.boxShadow = '0 0 10px #ffffff, 0 0 20px #ffffff';
+					domElement.style.borderColor = '#ffffff';
+					domElement.style.opacity = '0.7';
+
+				}
+
+				domElement.addEventListener( 'click', function () {
+
+					handleUIButtonClick();
+
+				} );
+
+			}
+
+			if ( domElement ) {
+
+				domElement.style.position = 'absolute';
+				domElement.style.left = element.x + '%';
+				domElement.style.top = element.y + '%';
+				domElement.style.width = element.width + '%';
+				domElement.style.height = element.height + '%';
+				domElement.style.pointerEvents = 'auto';
+
+				uiElementsContainer.appendChild( domElement );
+
+			}
+
+		} );
+
+	}
+
+	// Signal listeners for UI updates
+	signals.uiElementTransformed.add( function () {
+
+		renderUIElements();
+
+		// Remove light if no buttons exist
+		const elements = editor.uiState.canvas.elements || [];
+		const hasButton = elements.some( function ( el ) {
+
+			return el.type === ELEMENT_TYPE.BUTTON;
+
+		} );
+
+		if ( ! hasButton && uiButtonLight ) {
+
+			if ( uiButtonAnimationId ) {
+
+				cancelAnimationFrame( uiButtonAnimationId );
+				uiButtonAnimationId = null;
+
+			}
+
+			editor.scene.remove( uiButtonLight );
+			uiButtonLight = null;
+			render();
+
+		}
+
+		// Auto-close overlay when all elements are deleted
+		if ( elements.length === 0 && editor.uiState.canvas.overlayVisible ) {
+
+			editor.uiStateManager.setOverlayVisible( false );
+			signals.uiOverlayToggled.dispatch( false );
+
+		}
+
+	} );
+
+	signals.uiOverlayToggled.add( function ( visible ) {
+
+		if ( uiOverlay ) {
+
+			uiOverlay.style.display = visible ? 'block' : 'none';
+
+		}
+
+	} );
+
+	// UI Button Event (T-033 to T-040): DirectionalLight with color animation
+	let uiButtonLight = null;
+	let uiButtonAnimationId = null;
+	let uiButtonClock = null;
+	let uiButtonRandomOrder = [];
+
+	function handleUIButtonClick() {
+
+		if ( uiButtonLight ) {
+
+			// Remove existing light
+			if ( uiButtonAnimationId ) {
+
+				cancelAnimationFrame( uiButtonAnimationId );
+				uiButtonAnimationId = null;
+
+			}
+
+			editor.scene.remove( uiButtonLight );
+			uiButtonLight = null;
+			render();
+			renderUIElements();
+
+		} else {
+
+			// Create new DirectionalLight
+			uiButtonLight = new THREE.DirectionalLight( UI_BUTTON_COLORS[ 0 ], 2 );
+			uiButtonLight.name = 'UIButtonLight';
+			uiButtonLight.position.set( 5, 10, 7.5 );
+			editor.scene.add( uiButtonLight );
+
+			// Generate random color order (Red, Green, Blue in random sequence)
+			uiButtonRandomOrder = [ ...UI_BUTTON_COLORS ];
+
+			for ( let i = uiButtonRandomOrder.length - 1; i > 0; i -- ) {
+
+				const j = Math.floor( Math.random() * ( i + 1 ) );
+				[ uiButtonRandomOrder[ i ], uiButtonRandomOrder[ j ] ] =
+					[ uiButtonRandomOrder[ j ], uiButtonRandomOrder[ i ] ];
+
+			}
+
+			// Start color animation with THREE.Clock
+			uiButtonClock = new THREE.Clock();
+			animateUIButtonLight();
+			renderUIElements();
+
+		}
+
+	}
+
+	function animateUIButtonLight() {
+
+		if ( ! uiButtonLight ) return;
+
+		const elapsed = uiButtonClock.getElapsedTime();
+		const colorDuration = 1 / 3; // 333ms per color (1 second total)
+		const colorIndex = Math.floor( elapsed / colorDuration ) % 3;
+		uiButtonLight.color.setHex( uiButtonRandomOrder[ colorIndex ] );
+
+		render();
+		uiButtonAnimationId = requestAnimationFrame( animateUIButtonLight );
+
+	}
+
 	container.setId( 'viewport' );
 	container.setPosition( 'absolute' );
 
@@ -737,11 +1026,15 @@ function Viewport( editor ) {
 	signals.windowResize.add( function () {
 
 		updateAspectRatio();
+		updateCanvasBoxSize();
 
 		if ( renderer === null ) return;
 
 		renderer.setSize( container.dom.offsetWidth, container.dom.offsetHeight );
 		if ( pathtracer ) pathtracer.setSize( container.dom.offsetWidth, container.dom.offsetHeight );
+
+		// Re-render UI elements on window resize to maintain correct positions
+		renderUIElements();
 
 		render();
 
