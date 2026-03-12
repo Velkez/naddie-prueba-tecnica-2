@@ -36,6 +36,20 @@ jobs:
       - name: Build Three.js
         run: npm run build
 
+      - name: Create index.html redirect to editor
+        run: |
+          cat > index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta http-equiv="refresh" content="0;url=editor/">
+          </head>
+          <body>
+            <p>Redirecting to <a href="editor/">editor</a>...</p>
+          </body>
+          </html>
+          EOF
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
