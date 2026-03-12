@@ -23,6 +23,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            editor
+            build
+            examples
+            files
+            index.html
+          sparse-checkout-cone-mode: false
 
       - name: Create index.html redirect to editor
         run: |
