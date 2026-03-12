@@ -29,6 +29,7 @@ jobs:
             build
             examples
             files
+            src
             index.html
           sparse-checkout-cone-mode: false
 
