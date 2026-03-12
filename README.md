@@ -1,238 +1,211 @@
-# Segunda Prueba Técnica - Naddie
-![Naddie](https://github.com/user-attachments/assets/da0ca514-8020-4973-a36b-1bce957409a0)
+# Prueba Técnica: Sistema de Interfaz de Usuario 2D para Three.js Editor
+
+## 1. Visión General
+
+Este proyecto consiste en una extensión del editor oficial de Three.js para integrar un sistema de diseño de interfaz de usuario (UI) 2D independiente del espacio 3D. La implementación permite crear, gestionar y persistir elementos visuales (Botones e Imágenes) mediante una capa de superposición (UI Overlay) sobre el viewport principal, gestionada a través de un entorno de autoría interactivo integrado en el sidebar.
 
 ---
 
-Para usar el ejercicio, ingrese al siguiente enlace: [Prueba Técnica](https://velkez.github.io/naddie-prueba-tecnica-2/editor/)
+## 2. Arquitectura de Componentes
 
-## Guía de Uso
+### 2.1 UI Overlay (Capa de Visualización)
 
-### Botón (Evento)
+El UI Overlay es la capa de visualización final que se renderiza sobre el canvas de WebGL (ThreeJS).
 
-Para utilizar la funcionalidad de eventos, primero diríjase a la barra superior de opciones y posicione el cursor sobre la sección Add. Se desplegará un menú con múltiples opciones de adición; allí, navegue hasta la subsección UI y haga clic en la opción Evento, tal como se ilustra a continuación:
+- **Naturaleza**: Es un elemento DOM posicionado de forma absoluta sobre el canvas de Three.js.
+- **Función**: Mostrar al usuario final los elementos de UI (botones e imágenes) tal como se verían en una aplicación web convencional.
+- **Coordenadas**: Utiliza un sistema normalizado (0% a 100%) heredado del Estado Maestro, garantizando que la disposición sea responsiva ante cambios en el tamaño de la ventana del navegador.
+- **Cuadro de Visualización**: El contenido del canvas UI se renderiza dentro de un cuadro centrado en el overlay, con una proporción de **4:3**. Este cuadro representa el área visible donde se mostrará la interfaz diseñada.
 
-<img width="364" height="228" alt="image" src="https://github.com/user-attachments/assets/788e54de-f10e-4220-9cb8-6433bb033f31" />
+### 2.2 Panel de Control (Sidebar Tab)
 
+Para mantener la Separación de Incumbencias (Separation of Concerns), se añade una nueva pestaña denominada **CANVAS** en el `#sidebar`, situada junto a la pestaña de **SCENE**.
 
-Para activar esta opción, es indispensable tener un Mesh (malla) seleccionado en la escena. De lo contrario, el sistema mostrará una alerta indicando que debe seleccionar un objeto primero.
+- **Objetivo**: Disociar las herramientas de control 3D de las herramientas de diseño 2D, proporcionando un espacio de trabajo dedicado exclusivamente a la UI.
 
-<img width="445" height="133" alt="image" src="https://github.com/user-attachments/assets/e833db09-c5db-4de2-a725-a962549869b6" />
+### 2.3 Canvas de Edición (Sidebar)
 
+Dentro del panel lateral de CANVAS, se encuentra el área de edición interactiva. Este canvas escalada sirve como superficie de diseño directa.
 
-Una vez seleccionado el objeto y habilitada la funcionalidad, aparecerá una nueva pestaña llamada Eventos en la barra lateral (sidebar). Haga clic en ella para acceder a la configuración:
+- **Disposición del Panel**: El panel de CANVAS se organiza de la siguiente manera: el **Outliner de UI** se encuentra ubicado en la parte superior, seguido por el **Canvas de Edición** debajo. Esta jerarquía visual permite al usuario ver primero la lista de elementos y luego interactuar con el área de diseño.
+- **Redimensionamiento Dinámico**: El canvas de edición ajusta su tamaño en función del ancho del sidebar. Cuando el sidebar se vuelve más estrecho, el canvas se reduce proporcionalmente; cuando el sidebar se ensancha, el canvas aumenta su tamaño. Sin embargo, **la proporción horizontal (4:3)** se mantiene constante en todo momento. Esta restricción garantiza que la correspondencia con el UI Overlay sea coherente y que el Estado Maestro no sufra disrupciones al calcular las coordenadas normalizadas de los elementos.
+- **Interactividad Directa (Drag & Drop)**: El usuario puede hacer clic sobre los elementos (Botón/Imagen) y arrastrarlos para definir su posición.
+- **Reflejo en Tiempo Real (Mirroring)**: Cualquier cambio de posición, tamaño o jerarquía realizado en el canvas de edición se refleja instantáneamente en el UI Overlay del viewport principal.
+- **Gestión de Profundidad (Z-Index)**: La jerarquía en el outliner determina el orden de superposición. El último elemento en la lista es el que se renderiza por encima de los demás.
+- **Nota de Implementación**: Dado que se utiliza `position: absolute` en el DOM del overlay, el orden de renderizado corresponde directamente al orden de los nodos HTML. El Outliner deberá reordenar los nodos DOM del overlay para reflejar la jerarquía visual, sin necesidad de utilizar la propiedad CSS `z-index`.
+- **Sistema de Proyección**: El canvas del sidebar mantiene una relación de aspecto fija de **4:3**. Esta proporción es idéntica a la del cuadro de visualización en el UI Overlay, asegurando una correspondencia 1:1 entre las coordenadas del canvas de edición y el overlay. Al mantener esta proporción constante, se evitan distorsiones al trasladar coordenadas normalizadas entre ambos espacios.
+- **Transformadores de Selección**: Al seleccionar un elemento, aparecen controles visuales (handlers) para permitir el escalado manual.
 
-<img width="312" height="528" alt="image" src="https://github.com/user-attachments/assets/4dcddc3f-b971-4786-848b-dd8ef0adc39a" />
+### 2.4 Outliner de UI
 
+Dentro del panel lateral de CANVAS, se implementa un `#outliner` especializado:
 
-Dentro del menú desplegable, encontrará tres opciones: Rotación Horizontal, Rotación Vertical y Ninguno. Al seleccionar cualquiera de ellas, el objeto ejecutará la acción descrita de forma inmediata y persistente.
+- **Feedback Visual**: Lista todos los elementos activos en la interfaz.
+- **Interactividad**: Soporta Drag & Drop para reordenar los elementos y, por ende, su prioridad visual en el canvas.
 
-<img width="259" height="110" alt="image" src="https://github.com/user-attachments/assets/98913769-9ed5-45ff-882e-be9a4af8be65" />
+### 2.5 Botón de Activación del Overlay (UI Toggle)
 
+Para permitir al usuario previsualizar el resultado final, se implementa un botón de activación del UI Overlay.
 
-### Imagen
-
-Para utilizar la funcionalidad de imagen, diríjase nuevamente a la barra superior de opciones en la sección Add. Dentro de la subsección UI, seleccione la opción Imagen:
-
-<img width="365" height="225" alt="image" src="https://github.com/user-attachments/assets/3fd57abd-a010-4411-b7ae-ddec02725edb" />
-
-
-Tras activarla, aparecerá un botón de carga en el panel lateral que le permitirá importar la imagen de su preferencia:
-
-<img width="314" height="476" alt="image" src="https://github.com/user-attachments/assets/d5b05141-8434-484d-8747-73e0ee91bd80" />
-
-
-Al interactuar con este botón, se abrirá el gestor de archivos de su dispositivo. Los formatos admitidos son PNG, JPG y WEBP. Una vez seleccionada, la imagen se cargará en la escena como un objeto con geometría plana (PlaneGeometry), el cual ajustará sus dimensiones automáticamente según la proporción original de la imagen.
-
-Como cualquier otro objeto en la escena, podrá modificar sus propiedades de transformación (posición, rotación y escala) libremente:
-
-<img width="316" height="780" alt="image" src="https://github.com/user-attachments/assets/82f11917-860b-44bd-a6fa-7477beb227ff" />
-
-
-Además, también tendrá la posibilidad de aplicar eventos de animación a la imagen siguiendo los mismos pasos descritos en la sección anterior.
-
-
+- **Posicionamiento**: El botón debe estar ubicado al mismo nivel jerárquico que `#viewport` y `#toolbar` en la estructura DOM del editor. Se sitúa en la esquina inferior derecha, adyacente al `#sidebar`, respetando su espacio sin superponerse (similar al posicionamiento del `#viewhelper`).
+- **Estado Inicial**: El UI Overlay permanece oculto por defecto. El usuario debe activar manualmente la visualización.
+- **Validación de Contenido**: Al intentar activar el overlay, el sistema verifica la existencia de al menos un elemento UI (imagen o botón). Si no existe ningún elemento, el sistema muestra una alerta indicando que debe añadir al menos un elemento antes de visualizar el overlay.
+- **Comportamiento**: Al presionar el botón, se alterna la visibilidad del UI Overlay sobre el viewport 3D.
 
 ---
-## Desglosé del problema
 
-Este proyecto hace parte de una prueba técnica, en la cual nos pide hacer implementaciones desde un proyecto ya existente, este es el editor oficial de la librería ThreeJS. En la cual se nos pide hacer lo siguiente lo siguiente:
+## 3. Elementos de la Interfaz
 
-En la barra superior de opciones, podemos encontrar opciones como `File`, `Edit`, `Add`, `View`, `View` y `Render`. La prueba pide enfocarnos en la sección de `Add`, la cual despliega un conjunto de sub-secciones con opciones múltiples de adición a la `Scene`. Debajo de estas sub-secciones se agregó una nueva, cuyo nombre es `UI`. Este tiene dos opciones incluidas llamadas `Botón` e `Imagen`. A continuación se describe que hace cada sección:
+### 3.1 Imágenes
+
+- **Cantidad**: Ilimitada; el usuario puede instanciar tantas imágenes como requiera.
+- **Gestión**: Cada imagen es una entidad independiente con sus propias coordenadas, tamaño y fuente de datos.
+- **Consideraciones:** Al añadir una imagen desde `Add/UI/Imagen`, el sistema abrirá el navegador de archivos local del usuario para directamente seleccionar la imagen a añadir en el canvas de edición UI.
+
+### 3.2 Botón (Evento)
+
+- **Restricción de Unicidad**: El sistema permite **un solo botón** en el canvas.
+- **Validación**: Al intentar añadir un botón desde el menú `Add > UI > Botón`, el sistema verifica la existencia de uno previo. Si ya existe, se deniega la acción; si no, se permite su creación.
+- **Funcionalidad**: Actúa como el disparador de un evento lógico predeterminado hacia el canvas 3D (Three.js).
+- **Acción del Evento:** El evento será agregar una `DirectionalLight` en el canvas WebGL (ThreeJS) y que esta cambie de colores periódicamente por el rango de tiempo de 1 segundo. Los colores serían los RGB: `Red`, `Green` y `Blue` los cuales se irán cambiando "aleatorio"
+- **Nota de Implementación:** El cambio de colores debe gestionarse mediante `THREE.Clock` o `requestAnimationFrame` para garantizar una animación fluida e independiente de la velocidad del procesador.
+- **Desactivar Evento:** El usuario, al darle nuevamente al botón hará que la `DirectionalLight` se borré del canvas WebGL (ThreeJS)
 
 ---
-### Botón (Evento)
 
-Esta opción tuvo un cambio de nombre para que sea mas entendible su propósito, por lo tanto se llamó `Evento`. Esta opción posee un panel con el mismo nombre dentro del div `#properties.TabbedPanel` con el objetivo de que únicamente aparezca y pueda ser "invocado" cuando un mesh en la escena haya sido seleccionado, tal y como pasa con las pestañas de `Object`, `Geometry`, `Material` y `Script`.
+## 4. Interacción y UX (User Experience)
 
-Una vez seleccionado un mesh, en un principio, la pestaña con el panel `Evento` no aparecerá como las opciones mencionadas anteriormente; para que aparezca, se deberá seleccionar la opción `Evento` en la sección `Add/UI/Evento` de la barra de opciones ubicado en la parte superior del editor. En validación, la opción `Evento` no aparecerá en los mesh donde no se le ha "asignado", esta opción tiene una vinculación directa con el `UUID` del mesh al que se le haga lo descrito previamente.
+### 4.1 Activación de Selección
 
-El panel contiene un elemento `span` con el nombre de la opción, y un elemento `select` que proporciona las opciones de eventos. Las opciones de evento tienen 3 acciones que afectan al mesh al que esta vinculado: `Ninguno` (no activa ninguna acción), `Rotación Horizontal` (hace que el mesh rote horizontalmente sobre su eje Y), y `Rotación Vertical` (hace que el mesh rote verticalmente sobre su eje X).
+Al seleccionar un elemento en el Outliner o en el Canvas de Edición, se activará un **"Bounding Box"** (borde azul o puntos de control) sobre el elemento correspondiente. Esto permite al usuario identificar inequívocamente el objeto en edición.
 
-```mermaid
-flowchart TD
-    %% Inicio y validación de estado persistente
-    Start((Selección de Objeto)) --> CheckExist{¿userData.activeEvent</br> existe?}
-    
-    CheckExist -- Sí --> ShowTab[Mostrar pestaña 'Evento'</br> en TabbedPanel]
-    CheckExist -- No --> TopMenu[Menubar: Add > UI > Evento]
+- **Nota de Implementación**: El Bounding Box es una entidad puramente visual del editor y **no forma parte del Estado Maestro**. No debe incluirse en el JSON de persistencia, ya que solo existe durante la sesión de edición para facilitar la identificación del elemento seleccionado.
 
-    %% Proceso de activación desde el menú
-    TopMenu --> ClickEvent[Usuario hace click]
-    ClickEvent --> IsSelected{¿Objeto</br> seleccionado?}
-    
-    IsSelected -- No --> Alert[Alerta: Seleccionar un mesh primero]
-    IsSelected -- Sí --> IsMesh{¿Es tipo</br> Mesh?}
-    
-    IsMesh -- No --> Alert
-    IsMesh -- Sí --> InitData["Inyectar userData.activeEvent = 'Ninguno'"]
-    
-    %% Notificación al sistema
-    InitData --> Dispatch["signals.objectChanged.dispatch(object)"]
-    Dispatch --> ShowTab
-    
-    %% Interacción en la Sidebar
-    ShowTab --> UserUI[Usuario abre pestaña y</br> cambia el Select]
-    UserUI --> UpdateData[Actualizar valor en</br> userData.activeEvent]
-    
-    %% Motor de animación (Runtime)
-    UpdateData --> Runtime{Runtime Loop</br> - Viewport}
-    
-    Runtime -- "Rotación Horizontal" --> AnimRH["Activar rotación horizontal"]
-    Runtime -- "Rotación Vertical" --> AnimRV["Activar rotación vertical"]
-    Runtime -- "Ninguno" --> AnimN[Detener transformaciones]
-    
-    %% Cierre del flujo
-    AnimRH & AnimRV & AnimN --> Persist((Estado persistente en</br> escena JSON))
+### 4.2 Manipulación
 
-    %% Relación de retorno para la alerta
-    Alert -.-> Start
+Los elementos pueden ser ubicados y redimensionados dentro del espacio dispuesto por el canvas de edición.
+
+### 4.3 Sincronización Bidireccional
+
+1. El usuario mueve un elemento en el Canvas de Edición.
+2. El "Estado Maestro" (JSON) se actualiza.
+3. El UI Overlay lee el nuevo estado y reposiciona el elemento.
+
+### 4.4 Lógica de Comunicación (Signals)
+
+Se implementará un flujo de señales específico para este proceso:
+
+- `signals.uiElementTransformed`: Se dispara mientras el usuario arrastra un objeto en el canvas de edición.
+- `signals.uiStatePersisted`: Se dispara al soltar el elemento, activando el guardado en el Local Storage.
+
+---
+
+## 5. Persistencia y Estado Maestro
+
+Para garantizar que el diseño no se pierda al recargar el editor, se implementa un sistema de Estado Maestro centralizado:
+
+- **Sincronización**: El estado se guarda en el Local Storage del navegador en formato JSON, replicando el comportamiento nativo del editor de Three.js.
+
+### 5.1 Estructura del JSON de Estado
+
+```json
+{
+  "canvas": {
+    "elements": [
+      { 
+        "id": "img_1", 
+        "type": "image", 
+        "pos": [10, 20], 
+        "size": [100, 100], 
+        "src": "base64_or_url..." 
+      },
+      { 
+        "id": "btn_1", 
+        "type": "button", 
+        "pos": [50, 50], 
+        "event": "rotation" 
+      }
+    ]
+  }
+}
 ```
 
-**Consideraciones implementadas:** 
-- La opción `Evento` está únicamente disponible en los mesh, esto quiere decir que no es invocable en `Light` o `Camera`.
-- Al hacerle click a la opción de `Evento` en la barra superior de opciones, el sistema valida si un mesh esta seleccionado, en caso de que no sea así, se le informa al usuario por medio de una alerta que debe seleccionar un mesh de la escena.
-- El evento seleccionado persiste en el mesh aunque este seleccionado, por ejemplo: Si el usuario selecciona `Rotación Horizontal`, y luego selecciona otro mesh para aplicar otro evento, el mesh al que se le activó ese evento antes mencionado, persiste activo hasta que el usuario manualmente lo desactiva con la opción `Ninguno`.
-- No se guarda el estado del evento solo en la UI. El `UUID` del mesh actúa como llave en el objeto `userData` del mesh.
-- El `select` actualiza el valor en `userData.activeEvent`. Luego, en la función de renderizado del Viewport se consulta ese valor para aplicar la transformación.
-- Si el usuario elimina un mesh que tiene `Evento` vinculado, el sistema limpia automáticamente ya que el panel solo se muestra cuando existe `userData.activeEvent`.
+---
 
-Para garantizar la integridad del Editor y la persistencia de los datos, la implementación de la sección **UI / Evento** se rigió por los siguientes lineamientos técnicos:
+## 6. Consideraciones Técnicas de Implementación
 
-#### 1. Persistencia y Vinculación (Data Binding)
+### 6.1 Gestión de Colisiones
 
-La vinculación del evento con el **UUID** del Mesh se realizó mediante el objeto `userData` nativo de Three.js.
-- **Propiedad:** Se creó una clave `userData.activeEvent` en el objeto seleccionado.
-- **Valores permitidos:** `null` (por defecto), `'Ninguno'`, `'Rotación Horizontal'`, `'Rotación Vertical'`.
-- **Justificación:** El uso de `userData` garantiza que el evento persista si la escena es exportada o guardada en formato JSON, cumpliendo con el requisito de persistencia mencionado en la prueba.
+Como el canvas del sidebar es pequeño, los elementos pueden ser difíciles de agarrar. Se debe definir un área de colisión (padding) un poco más grande que el elemento visual para facilitar el "drag".
 
-#### 2. Gestión de la Interfaz (Sidebar & TabbedPanel)
+### 6.2 Optimización de Actualización
 
-El panel **Evento** se integró en el ciclo de vida de la barra lateral (`Sidebar.js`):
-- **Inyección de Componente:** Se creó el módulo `Sidebar.Event.js` que hereda de la clase `UI.Panel`.
-- **Visibilidad Dinámica:** El panel escucha la señal `signals.objectSelected`.
-    - Si el objeto es un `Mesh` **Y** posee la propiedad `userData.activeEvent`, el panel ejecuta `.setDisplay( 'block' )`.
-    - En cualquier otro caso (Cámaras, Luces o Meshes sin el flag activo), ejecuta `.setDisplay( 'none' )`.
-- **Activación desde Menú:** Al hacer clic en `Add > UI > Evento`, se injectó la propiedad inicial `userData.activeEvent = 'Ninguno'` al objeto seleccionado y se disparó la señal `signals.objectChanged.dispatch( object )` para forzar la actualización de la UI.
-
-#### 3. Motor de Animación (Runtime)
-
-Las opciones **Rotación Horizontal** y **Rotación Vertical** requieren cambios en tiempo real, la lógica no reside en el panel de la interfaz, sino en el bucle de renderizado del editor (`Viewport.js`):
-- **Rotación Horizontal:** Se aplica un incremento constante al eje Y.
-- **Rotación Vertical:** Se aplica un incremento constante al eje X.
-- **Optimización:** El motor de renderizado solo aplica estas transformaciones a los objetos cuyo `userData.activeEvent` sea distinto de `'Ninguno'`.
-- **Control de transformación:** La animación se pausa únicamente cuando el usuario está activamente transformando el objeto (arrastrando con el mouse), no cuando simplemente está seleccionado. Esto se logra mediante un flag `transformControlsDragging` que se activa en el evento `mouseDown` del `TransformControls` y se desactiva en `mouseUp`.
-
-#### 4. Validaciones de Seguridad
-
-- **Check de Selección:** Antes de proceder con la activación desde el menú superior, el sistema valida: `if ( editor.selected === null || !editor.selected.isMesh )`.
-- **Notificación:** Si la validación falla, se invoca el sistema de alertas nativo del navegador o del editor para interrumpir el flujo.
+No se debe actualizar el JSON del Local Storage en cada píxel que el usuario mueva el mouse (eso es costoso). Se debe actualizar el UI Overlay en tiempo real, pero guardar en el Local Storage solo cuando el usuario suelte el elemento (mouseup).
 
 ---
 
-### Imagen
+## 7. Flujo de Trabajo del Usuario
 
-Para la implementación de la entidad **Imagen**, se extendió el comportamiento del núcleo del editor para soportar objetos bidimensionales dentro del espacio tridimensional, siguiendo estas directrices:
+1. **Adición**: El usuario accede a la barra superior `Add > UI` para elegir entre Botón o Imagen.
+2. **Selección de Imagen**: Si elige Imagen, el sistema abre el navegador de archivos local para seleccionar la imagen.
+3. **Validación de Botón**: Si elige Botón, el sistema verifica si ya existe uno. Si existe, muestra alerta y cancela; si no, crea el elemento.
+4. **Renderizado Inicial**: El elemento se renderiza en el Canvas de Edición del sidebar y se actualiza el Estado Maestro.
+5. **Edición**: El usuario arrastra los elementos en el Canvas de Edición para posicionar y redimensionar.
+6. **Selección**: Al seleccionar un elemento, se muestra el Bounding Box visual para identificarlo.
+7. **Gestión de Capas**: El usuario reordena los elementos en el Outliner para controlar el Z-Index (orden de superposición).
+8. **Activación del Overlay**: El usuario presiona el botón de toggle en la esquina inferior derecha.
+   - Si no hay elementos UI, el sistema muestra alerta.
+   - Si existen elementos, alterna la visibilidad del UI Overlay.
+9. **Persistencia**: Cualquier cambio actualiza automáticamente el JSON en el Local Storage.
 
-#### 1. Inyección en el Panel de Escena (Scene Sidebar)
-
-A diferencia de los eventos, la interfaz de **Imagen** se integró de forma persistente en el panel de Scene (`Sidebar.Scene.js`):
-
-- **Estructura DOM:** Se insertó un nuevo contenedor `UI.Row` debajo de las propiedades globales de la escena.
-- **Separación:** Se utilizó un elemento `<br class="Break">` para delimitar visualmente esta sección de los parámetros estándar de renderizado (Fog, Background, etc.).
-- **Activador de Carga:** El panel contiene un componente `UI.Input` de tipo `file` que muestra un gráfico/icono de "Upload". Este solo es funcional una vez activada la opción desde el menú superior.
-
-#### 2. Comportamiento de Instanciación
-
-Al seleccionar `Add > UI > Imagen`, se habilita el flujo de carga:
-
-- **Entidad en Escena:** Una vez que el usuario selecciona un archivo local, el sistema no solo muestra la imagen en el panel, sino que instancia un objeto de clase `THREE.Mesh` (con geometría `PlaneGeometry`).
-- **Manejo de Texturas:** El archivo cargado se convierte en una `THREE.Texture`. Se utilizó `TextureLoader` para asignar el mapa de bits al material del objeto recién creado.
-- **Material:** El material se crea con las propiedades `transparent: true` y `opacity: 1` para permitir el control de opacidad.
-- **Transformaciones Estándar:** El objeto resultante posee todas las propiedades de un `Object3D`. Esto permite que el usuario utilice los transformadores nativos del editor (Translation, Rotation, Scale) mediante los controles de teclado o las flechas del viewport.
-
-#### 3. Flujo de Trabajo y Jerarquía
-
-- **Jerarquía de Objetos:** La imagen instanciada aparece en el `Outliner` (árbol de objetos) como cualquier otro Mesh, permitiendo su selección y edición individual.
-- **Validación de Carga:** El sistema valida que el archivo sea un formato de imagen compatible (JPG, PNG, WebP) antes de intentar la creación del objeto en la escena para evitar errores de renderizado.
-- **Nombrado:** Las imágenes se nombran secuencialmente como "Imagen 1", "Imagen 2", etc.
-
-La funcionalidad de `Imagen` se dividió en dos fases: Activación y Gestión.
-
-#### 4. Fase de Activación (Panel Scene)
-
-El panel de Scene (`Sidebar.Scene.js`) actúa exclusivamente como el punto de entrada para la creación de nuevos elementos visuales.
-
-- **Componente "Portal":** Se injectó un `UI.Row` que contiene un botón de carga. Este componente se mantiene oculto hasta que el usuario lo invoca mediante el menú `Add > UI > Imagen`.
-- **Disparador de Instancia:** Al cargar un archivo a través de este portal, el sistema ejecutó un comando de creación (`Editor.execute( new AddObjectCommand( ... ) )`).
-- **Creación del Objeto:** Se instanciò un `THREE.Mesh` con una `THREE.PlaneGeometry` cuyas proporciones (aspect ratio) se ajustan automáticamente a las dimensiones de la imagen cargada.
-
-#### 5. Fase de Gestión (Panel Object)
-
-Una vez que el objeto "Imagen" existe en la escena y está seleccionado, su configuración detallada se trasladó al panel de Propiedades de Objeto (`Sidebar.Object.js`).
-
-- **Contextualización:** El panel de Objeto detecta mediante la propiedad `object.userData.type === 'ui-image'` que se trata de una entidad de tipo Imagen.
-- **Controles Específicos:** Se habilitó una sección dentro de `Sidebar.Object.js` que permite:
-    - **Ajuste de Opacidad:** Un slider para controlar la transparencia del material (`Material.opacity`).
-- **Coherencia Visual:** Esto permite que el usuario use las pestañas nativas de _Geometry_ y _Material_ para ajustes técnicos, mientras que la configuración específica de la "Imagen" reside en la pestaña principal de _Object_.
-
-#### 6. Flujo de Señales (Signals)
-
-- **Actualización en Tiempo Real:** Se utilizó la señal `signals.objectChanged` para asegurar que cualquier cambio en la imagen se refleje inmediatamente en el Viewport y en el historial de "Undo/Redo".
-- **Selección Automática:** Inmediatamente después de la carga exitosa desde el panel Scene, el sistema fuerza la selección del nuevo objeto (`editor.select( mesh )`) para que el usuario sea redirigido visualmente al panel de gestión de objetos.
 
 ```mermaid
 flowchart TD
-    %% Inicio y Activación del Portal
-    Start((Inicio)) --> TopMenu[Menubar: Add > UI > Imagen]
-    TopMenu --> ShowPortal[Mostrar Portal de Carga en </br> Sidebar.Scene.js]
+    %% Inicio del proceso
+    Start((Inicio)) --> Menu[Menubar: Add > UI]
     
-    %% Flujo de Carga y Validación
-    ShowPortal --> UserUpload[Usuario selecciona archivo </br> PNG, JPG, WEBP]
-    UserUpload --> Validate{¿Formato </br> válido?}
+    %% Selección de elemento
+    Menu --> Choice{¿Qué desea </br> añadir?}
     
-    Validate -- No --> Error[Alerta: Formato no soportado]
-    Error --> ShowPortal
-
-    %% Creación y Transformación Técnica
-    Validate -- Sí --> LoadTexture[Cargar mediante </br> TextureLoader]
-    LoadTexture --> CalcAspect[Calcular Aspect Ratio </br> de la imagen]
-    CalcAspect --> CreateMesh["Instanciar THREE.Mesh </br> (PlaneGeometry + userData)"]
+    %% Rama de Botón con Validación
+    Choice -- "Botón (Evento)" --> CheckBtn{¿Ya existe </br> un botón?}
+    CheckBtn -- "Sí" --> AlertBtn[Alerta: Solo se permite </br> un botón de evento]
+    CheckBtn -- "No" --> CreateBtn[Crear elemento Button </br> en Canvas de Edición]
     
-    %% Integración con el Editor
-    CreateMesh --> Command[Ejecutar AddObjectCommand]
-    Command --> AutoSelect["signals.objectSelected (Selección automática)"]
+    %% Rama de Imagen
+    Choice -- "Imagen" --> SelectImg[Seleccionar imagen </br> desde archivo local]
+    SelectImg --> CreateImg[Crear elemento Imagen </br> en Canvas de Edición]
     
-    %% Gestión Contextual
-    AutoSelect --> CheckType{¿Es </br> ui-image?}
-    CheckType -- Sí --> ShowObjectPanel[Mostrar controles Object </br> en Sidebar.Object.js]
+    %% Registro y Renderizado
+    CreateBtn & CreateImg --> Registry[Actualizar JSON de </br> Estado Maestro]
+    Registry --> Render[Renderizar en UI Overlay </br> sobre Viewport 3D]
     
-    %% Interacción del Usuario
-    ShowObjectPanel --> Interaction[Usuario ajusta Opacidad / </br> Transformaciones]
-    Interaction --> Signal["signals.objectChanged.dispatch()"]
+    %% Interacción en Sidebar
+    Render --> SidebarTab[Pestaña lateral: </br> CANVAS]
+    SidebarTab --> Outliner[Outliner de UI: </br> Gestión de Capas / Z-Index]
+    
+    %% Edición en Canvas de Edición
+    Outliner --> CanvasEdit[Canvas de Edición: </br> Drag & Drop]
+    CanvasEdit --> Transform[Transformar elemento: </br> Mover / Escalar]
     
     %% Persistencia
-    Signal --> Viewport((Actualización en Viewport </br> y Historial Undo/Redo))
-
-    %% Relación de retorno
-    Error -.-> UserUpload
+    Transform --> UpdateJSON[Actualizar Estado Maestro </br> en LocalStorage]
+    
+    %% Activación del Overlay
+    UpdateJSON --> ToggleBtn[Botón Toggle: </br> UI Overlay]
+    ToggleBtn --> CheckElements{¿Existe al menos </br> un elemento UI?}
+    CheckElements -- "No" --> AlertEmpty[Alerta: Añade al menos </br> un elemento UI]
+    CheckElements -- "Sí" --> ToggleOverlay{¿Overlay </br> visible?}
+    ToggleOverlay -- "Sí" --> Hide[Ocultar UI Overlay]
+    ToggleOverlay -- "No" --> Show[Mostrar UI Overlay]
+    
+    Show --> Sync((Sincronización </br> completada))
+    Hide --> Sync
+    AlertEmpty -.-> SidebarTab
+    AlertBtn -.-> SidebarTab
+    UpdateJSON -.-> Render
 ```
+
+## 8. Adicionales
+
+Debido a un al entendido se desarrollo otras funcionalidades en una iteración pasada, sin embargo se considero conservarlas ya que de cierto modo son "divertidas" y también para no desechar ese trabajo que se hizo anteriormente. y esta se conserve en el sub-menú `Other`, el cual añade una imagen en el canvas 3D y aparte también añade interacción de eventos de rotación vertical y horizontal de meshes individuales. Para leer la documentación y la guía de uso sobre estas funcionalidades, puede navegar al siguiente enlace: [Otros](./docs/other.md)
