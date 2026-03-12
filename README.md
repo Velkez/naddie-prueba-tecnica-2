@@ -1,5 +1,9 @@
 # Prueba Técnica: Sistema de Interfaz de Usuario 2D para Three.js Editor
 
+<img width="1491" height="868" alt="image" src="https://github.com/user-attachments/assets/ec13e3bc-61c6-47c1-91e5-1622eadf7134" />
+
+Para probar las funciones nuevas haga click en el siguiente enlace: [Prueba Técnica](https://velkez.github.io/naddie-prueba-tecnica-2/editor/)
+
 ## 1. Visión General
 
 Este proyecto consiste en una extensión del editor oficial de Three.js para integrar un sistema de diseño de interfaz de usuario (UI) 2D independiente del espacio 3D. La implementación permite crear, gestionar y persistir elementos visuales (Botones e Imágenes) mediante una capa de superposición (UI Overlay) sobre el viewport principal, gestionada a través de un entorno de autoría interactivo integrado en el sidebar.
